@@ -1,0 +1,17 @@
+.\obj\usbepfunc.o: Usb\usbepfunc.c
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h
+.\obj\usbepfunc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
+.\obj\usbepfunc.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h
+.\obj\usbepfunc.o: Usb\..\type.h
+.\obj\usbepfunc.o: Usb\..\Utility\Utility.h
+.\obj\usbepfunc.o: Usb\usbhw.h
+.\obj\usbepfunc.o: Usb\usbram.h
+.\obj\usbepfunc.o: Usb\usbdesc.h
+.\obj\usbepfunc.o: Usb\usbuser.h
+.\obj\usbepfunc.o: Usb\usbepfunc.h
+.\obj\usbepfunc.o: Usb\..\UsbHid\hid.h
+.\obj\usbepfunc.o: Usb\..\UsbHid\hiduser.h

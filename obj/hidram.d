@@ -1,0 +1,9 @@
+.\obj\hidram.o: UsbHid\hidram.c
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h
+.\obj\hidram.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
+.\obj\hidram.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h
+.\obj\hidram.o: UsbHid\hidram.h

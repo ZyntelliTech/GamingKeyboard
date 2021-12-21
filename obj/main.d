@@ -1,0 +1,17 @@
+.\obj\main.o: main.c
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h
+.\obj\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h
+.\obj\main.o: C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F200_Def.h
+.\obj\main.o: .\Utility\Utility.h
+.\obj\main.o: .\Usb\usbram.h
+.\obj\main.o: .\Usb\usbdesc.h
+.\obj\main.o: .\Usb\usbhw.h
+.\obj\main.o: .\Usb\usbuser.h
+.\obj\main.o: .\Usb\usbepfunc.h
+.\obj\main.o: .\UsbHid\hid.h
+.\obj\main.o: .\UsbHid\hiduser.h

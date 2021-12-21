@@ -1,0 +1,16 @@
+--cpu Cortex-M0
+".\obj\main.o"
+".\obj\utility.o"
+".\obj\usbram.o"
+".\obj\usbhw.o"
+".\obj\usbdesc.o"
+".\obj\usbuser.o"
+".\obj\usbepfunc.o"
+".\obj\hidram.o"
+".\obj\hiduser.o"
+".\obj\startup_sn32f240b.o"
+".\obj\system_sn32f240b.o"
+--strict --scatter ".\obj\SN32F240B.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\SN32F240B.map" -o .\obj\SN32F240B.axf
