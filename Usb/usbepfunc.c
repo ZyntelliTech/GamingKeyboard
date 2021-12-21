@@ -62,10 +62,12 @@ uint32_t	USB_EPnINFunction(uint32_t	wEPNum, uint32_t *pData, uint32_t	wBytecnt)
 				fnUSBMAIN_WriteFIFO( i , *pData );
 			}
 			#else
-			fnUSBMAIN_WriteFIFO( i , ((*pData<<8)&0xFFFFFF00)|0x01 );	//** Byte 0 = Report ID
-			fnUSBMAIN_WriteFIFO( i+4 , (*pData>>24)&0x000000FF );	//** Byte 1 ~ 4 = Mouse data
+			//fnUSBMAIN_WriteFIFO( i , ((*pData<<8)&0xFFFFFF00)|0x01 );	//** Byte 0 = Report ID
+			//fnUSBMAIN_WriteFIFO( i+4 , (*pData>>24)&0x000000FF );	//** Byte 1 ~ 4 = Mouse data
+			fnUSBMAIN_WriteFIFO( i , *pData);
+			fnUSBMAIN_WriteFIFO( i+4 , *(pData + 1));	
 			#endif
-			USB_Test();				//return Mouse data
+			//USB_Test();				//return Mouse data
 			USB_EPnAck(wEPNum,wBytecnt);	// ACK hwByteCnt byte
 			return EPn_RETURN_ACK_OK;
 		}

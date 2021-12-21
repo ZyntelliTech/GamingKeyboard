@@ -15,3 +15,6 @@
 .\obj\main.o: .\Usb\usbepfunc.h
 .\obj\main.o: .\UsbHid\hid.h
 .\obj\main.o: .\UsbHid\hiduser.h
+.\obj\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\obj\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\obj\main.o: usb_hid_keycode.h

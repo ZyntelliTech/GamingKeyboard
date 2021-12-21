@@ -37,6 +37,9 @@
 #include	".\Usb\usbepfunc.h"
 #include	".\UsbHid\hid.h"
 #include	".\UsbHid\hiduser.h"
+#include <stdio.h>
+#include <string.h>
+#include "usb_hid_keycode.h"
 
 /*_____ D E C L A R A T I O N S ____________________________________________*/
 void	NotPinOut_GPIO_init(void);
@@ -49,9 +52,41 @@ void	NotPinOut_GPIO_init(void);
 
 /*_____ M A C R O S ________________________________________________________*/
 
+typedef struct
+{
+	uint8_t MODIFIER;
+	uint8_t RESERVED;
+	uint8_t KEYCODE1;
+	uint8_t KEYCODE2;
+	uint8_t KEYCODE3;
+	uint8_t KEYCODE4;
+	uint8_t KEYCODE5;
+	uint8_t KEYCODE6;
+}keyboardHID;
+
+keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
+uint32_t keyboardhid_report[2];
+
+
 /*_____ F U N C T I O N S __________________________________________________*/
 void SysTick_Init(void);
 void NDT_Init(void);
+
+void SendKeyCode(keyboardHID key_hid, uint32_t delay_ms)
+{
+	keyboardhid_report[0] = (key_hid.KEYCODE2<<24) | (key_hid.KEYCODE1<<16) | (key_hid.RESERVED << 8) | key_hid.MODIFIER;
+	keyboardhid_report[1] = (key_hid.KEYCODE6<<24) | (key_hid.KEYCODE5<<16) | (key_hid.KEYCODE4<<8) | (key_hid.KEYCODE3);
+	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
+	UT_MAIN_DelayNms(delay_ms);
+}
+void releaseKeyCode(uint32_t delay_ms)
+{
+	memset(&keyboardhid, 0x00, 8);
+	keyboardhid_report[0] = 0;
+	keyboardhid_report[1] = 0;
+	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
+	UT_MAIN_DelayNms(delay_ms);
+}
 
 /*****************************************************************************
 * Function		: main
@@ -70,17 +105,6 @@ int	main (void)
 	//2. User SHALL set the status of the GPIO which are NOT pin-out to input pull-up.
 	NotPinOut_GPIO_init();
 	
-	//** Initial GPIO
-	SN_GPIO0->CFG = 0x00000000;  //** Enable P0 internal pull-up resistor
-	SN_GPIO1->CFG = 0x00000000;  //** Enable P1 internal pull-up resistor
-	SN_GPIO2->CFG = 0x00000000;  //** Enable P2 internal pull-up resistor
-	SN_GPIO3->CFG = 0x00000000;  //** Enable P3 internal pull-up resistor
-	
-	SN_GPIO0->MODE = 0x00000000; //** P0 Input mode			
-	SN_GPIO1->MODE = 0x00000000; //** P1 Input mode
-	SN_GPIO2->MODE = 0x00000000; //** P2 Input mode
-	SN_GPIO3->MODE = 0x00000000; //** P3 Input mode
-	
 	NDT_Init();								/* NDT Initialization */
 	//****************USB Setting START******************//
 	USB_Init();								/* USB Initialization */
@@ -97,6 +121,9 @@ int	main (void)
 		#else
 		USB_EPnINFunction(USB_EP2,&wUSB_MouseData,5);
 		#endif*/
+		keyboardhid.KEYCODE1 = KEY_A;
+		SendKeyCode(keyboardhid, 50);
+		releaseKeyCode(1000);
 	}
 }
 
