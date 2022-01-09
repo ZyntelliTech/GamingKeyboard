@@ -7,7 +7,7 @@
 	//** USB Remote Wakeup I/O Define
 	//** USB Remote Wakeup I/O Port Define, Default P1.5
 	#define	REMOTE_WAKEUP_IO_P0			DISABLE
-	#define	REMOTE_WAKEUP_IO_P1			ENABLE
+	#define	REMOTE_WAKEUP_IO_P1			DISABLE
 	#define	REMOTE_WAKEUP_IO_P2			DISABLE
 	#define	REMOTE_WAKEUP_IO_P3			DISABLE
 

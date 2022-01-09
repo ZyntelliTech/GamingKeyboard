@@ -1,5 +1,7 @@
 --cpu Cortex-M0
 ".\obj\main.o"
+".\obj\gpio.o"
+".\obj\systick.o"
 ".\obj\utility.o"
 ".\obj\usbram.o"
 ".\obj\usbhw.o"

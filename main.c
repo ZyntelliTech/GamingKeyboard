@@ -40,7 +40,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "usb_hid_keycode.h"
-
+#include "GPIO.h"
+#include "SysTick.h"
+#define CLICKED	 1
+#define RELEASED 0
 /*_____ D E C L A R A T I O N S ____________________________________________*/
 void	NotPinOut_GPIO_init(void);
 
@@ -64,8 +67,46 @@ typedef struct
 	uint8_t KEYCODE6;
 }keyboardHID;
 
+/* USB HID variables */
 keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
 uint32_t keyboardhid_report[2];
+
+/* Key Press Flag */
+uint8_t key_pressed = 0;
+uint8_t i =  0;
+
+#define CL_NUM 19
+uint8_t ckeyMapper[CL_NUM][2] = {
+	{GPIO_PORT3, GPIO_PIN4},		//CL0
+	{GPIO_PORT3, GPIO_PIN3}, 		//CL1
+	{GPIO_PORT1, GPIO_PIN15},		//CL2
+	{GPIO_PORT1, GPIO_PIN14},		//CL3
+	{GPIO_PORT1, GPIO_PIN13},		//CL4
+	{GPIO_PORT1, GPIO_PIN6},		//CL5
+	//{GPIO_PORT3, GPIO_PIN6},		//CL6
+	//{GPIO_PORT3, GPIO_PIN5},		//CL7
+	{GPIO_PORT0, GPIO_PIN8},		//CL8
+	{GPIO_PORT0, GPIO_PIN9},		//CL9
+	{GPIO_PORT0, GPIO_PIN10},		//CL10
+	{GPIO_PORT0, GPIO_PIN11},		//CL11
+	{GPIO_PORT0, GPIO_PIN12},		//CL12
+	{GPIO_PORT0, GPIO_PIN13},		//CL13
+	{GPIO_PORT0, GPIO_PIN14},		//CL14
+	{GPIO_PORT1, GPIO_PIN0},		//CL15
+	{GPIO_PORT1, GPIO_PIN1},		//CL16
+	{GPIO_PORT1, GPIO_PIN2},		//CL17
+	{GPIO_PORT1, GPIO_PIN3},		//CL18
+	{GPIO_PORT1, GPIO_PIN4},		//CL19
+	{GPIO_PORT1, GPIO_PIN5},		//CL20
+};
+uint8_t rKeyMapper[6][2] = {
+	{GPIO_PORT2, GPIO_PIN15},		//R0
+	{GPIO_PORT3, GPIO_PIN11}, 	//R1
+	{GPIO_PORT3, GPIO_PIN10},		//R2
+	{GPIO_PORT3, GPIO_PIN9},		//R3
+	{GPIO_PORT3, GPIO_PIN8},		//R4
+	{GPIO_PORT3, GPIO_PIN7},		//R5
+};
 
 
 /*_____ F U N C T I O N S __________________________________________________*/
@@ -77,7 +118,7 @@ void SendKeyCode(keyboardHID key_hid, uint32_t delay_ms)
 	keyboardhid_report[0] = (key_hid.KEYCODE2<<24) | (key_hid.KEYCODE1<<16) | (key_hid.RESERVED << 8) | key_hid.MODIFIER;
 	keyboardhid_report[1] = (key_hid.KEYCODE6<<24) | (key_hid.KEYCODE5<<16) | (key_hid.KEYCODE4<<8) | (key_hid.KEYCODE3);
 	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
-	UT_MAIN_DelayNms(delay_ms);
+	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
 }
 void releaseKeyCode(uint32_t delay_ms)
 {
@@ -85,9 +126,120 @@ void releaseKeyCode(uint32_t delay_ms)
 	keyboardhid_report[0] = 0;
 	keyboardhid_report[1] = 0;
 	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
-	UT_MAIN_DelayNms(delay_ms);
+	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
 }
 
+void GPIO_Configuration(void)
+{
+	// Input/Output mode
+	SN_GPIO0->MODE = 0xFFFFFFFF;
+	SN_GPIO1->MODE = 0xFFFFFFFF;
+	SN_GPIO2->MODE = 0xFFF7FFF;
+	SN_GPIO3->MODE = 0x0000F078;
+	
+	// Configure Pullup
+	//SN_GPIO0->CFG = 0x00000000;
+	//SN_GPIO1->CFG = 0x00000000;
+	//SN_GPIO2->CFG = 0x00000000;	
+	//SN_GPIO3->CFG = 0x00000000;
+	// Data reset
+	SN_GPIO0->DATA = 0x00000000;
+	SN_GPIO1->DATA = 0x00000000;
+	SN_GPIO2->DATA = 0x00000000;
+	SN_GPIO3->DATA = 0x00000000;
+}
+
+void resetAllGpio()
+{
+	SN_GPIO0->DATA = 0x00000000;
+	SN_GPIO1->DATA = 0x00000000;
+	SN_GPIO2->DATA = 0x00000000;
+	SN_GPIO3->DATA = 0x00000000;
+}
+
+void readKeyboard(void)
+{
+	resetAllGpio();
+	for(i = 0; i < 4; i++)
+	{
+		GPIO_Set(ckeyMapper[i][0], ckeyMapper[i][1]);
+		switch (i){
+			case 0:
+				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_A; 
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_B; 
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_C; 
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_D;
+					key_pressed = 0x01;
+				}					
+				break;
+			case 1:
+				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){ 
+					keyboardhid.KEYCODE1 = KEY_E;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_F;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_G;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_H;		
+					key_pressed = 0x01;
+				}
+				break;
+			case 2:
+				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_I;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_J;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_K;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_L;		
+					key_pressed = 0x01;
+				}
+				break;
+			case 3:
+				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_M;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_N;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_O;
+					key_pressed = 0x01;
+				}
+				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
+					keyboardhid.KEYCODE1 = KEY_P;		
+					key_pressed = 0x01;
+				}
+				break;
+		}
+		if(key_pressed > 0) break;
+	}
+}
 /*****************************************************************************
 * Function		: main
 * Description	: USB HID demo code 
@@ -109,68 +261,54 @@ int	main (void)
 	//****************USB Setting START******************//
 	USB_Init();								/* USB Initialization */
 	//*******************USB Setting END*****************//
+	GPIO_Configuration();
+	SysTick_Init();	//init SysTick
 	
 	while (1)
-	{	
+	{
+#if SYSTICK_IRQ == POLLING_METHOD
+		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+		{
+			// Cycle Processing by SysTick
+			readKeyboard();
+			if(key_pressed == 1){
+				keyboardhid.KEYCODE2 = keyboardhid.KEYCODE1;	
+				//keyboardhid.KEYCODE3 = keyboardhid.KEYCODE1;	
+				//keyboardhid.KEYCODE4 = keyboardhid.KEYCODE1;	
+				//keyboardhid.KEYCODE5 = keyboardhid.KEYCODE1;	
+				//keyboardhid.KEYCODE6 = keyboardhid.KEYCODE1;	
+				SendKeyCode(keyboardhid, 100);		
+				releaseKeyCode(100);
+				key_pressed = 0;
+			}
+			
+			__SYSTICK_CLEAR_COUNTER_AND_FLAG;
+		}
+#endif	
+		/*
+		GPIO_Set(ckeyMapper[0][0], ckeyMapper[0][1]);
+#ifdef BUS_SUSPEND
 		if (sUSB_EumeData.wUSB_Status & mskBUSSUSPEND)	//** Check BusSuspend
 		{
 			USB_Suspend();
 		}
-		/*#if (USB_LIBRARY_TYPE == USB_MOUSE_TYPE)
-		USB_EPnINFunction(USB_EP1,&wUSB_MouseData,4);
-		#else
-		USB_EPnINFunction(USB_EP2,&wUSB_MouseData,5);
-		#endif*/
-		keyboardhid.KEYCODE1 = KEY_A;
-		SendKeyCode(keyboardhid, 50);
-		releaseKeyCode(1000);
+#endif
+		
+#if (USB_LIBRARY_TYPE == USB_KB_MOUSE_TYPE1) 
+		//readKeyboard();
+		//if(key_flag > 0){ 
+		//	SendKeyCode(keyboardhid, 1);
+		//	releaseKeyCode(1);
+		//	key_flag = 0;
+		//}
+#elif (USB_LIBRARY_TYPE == USB_MOUSE_TYPE)
+			USB_EPnINFunction(USB_EP1,&wUSB_MouseData,4);
+#else
+			USB_EPnINFunction(USB_EP2,&wUSB_MouseData,5);
+#endif
+*/
 	}
 }
-
-
-/*****************************************************************************
-* Function		 : SysTick_Init
-* Description	 : For EFT Protection
-* Input	(Global) : None
-* Input	(Local)	 : None
-* Output (Global): None
-* Return (Local) : None
-*****************************************************************************/
-void	SysTick_Init (void)
-{
-	SysTick->LOAD = 0x000752FF;		//RELOAD = (system tick clock frequency ? 10 ms)/1000 -1
-	SysTick->VAL = 0xFF; //__SYSTICK_CLEAR_COUNTER_AND_FLAG;
-	SysTick->CTRL = 0x7;			//Enable SysTick timer and interrupt	
-}
-
-
-/*****************************************************************************
-* Function		 : SysTick_Handler
-* Description	 : For EFT Protection
-* Input	(Global) : None
-* Input	(Local)	 : None
-* Output (Global): None
-* Return (Local) : None
-*****************************************************************************/
-__irq void SysTick_Handler(void)
-{
-	if(bNDT_Flag)			//** Check NDT
-	{
-		if(SN_SYS0->NDTSTS_b.NDT5V_DET == 1)
-		{
-			dbNDT_Cnt = 0;
-		}
-		else
-		{
-		  dbNDT_Cnt++;
-			if(dbNDT_Cnt == 90)//** 900ms
-			{
-				bNDT_Flag = 0;
-			}
-		}
-	}	
-}
-
 
 /*****************************************************************************
 * Function		 : NDT_Init

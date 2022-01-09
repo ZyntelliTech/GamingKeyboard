@@ -1,5 +1,5 @@
 Dependencies for Project 'SN32F240B_Demo', Target 'SN32F240B': (DO NOT MODIFY !)
-F (.\main.c)(0x61C223D8)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
+F (.\main.c)(0x61DA88EC)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
@@ -11,7 +11,7 @@ I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\
 I (.\Utility\Utility.h)(0x595F4E28)
 I (.\Usb\usbram.h)(0x596C5FFE)
 I (.\Usb\usbdesc.h)(0x61C2174C)
-I (.\Usb\usbhw.h)(0x59706F14)
+I (.\Usb\usbhw.h)(0x61C22A6C)
 I (.\Usb\usbuser.h)(0x57904C22)
 I (.\Usb\usbepfunc.h)(0x56B32FBE)
 I (.\UsbHid\hid.h)(0x52E23F60)
@@ -19,6 +19,27 @@ I (.\UsbHid\hiduser.h)(0x52E23F60)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x599ECD2C)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x599ECD2C)
 I (usb_hid_keycode.h)(0x61C223B2)
+I (GPIO.h)(0x61B37E80)
+I (SysTick.h)(0x596C8A6C)
+F (.\GPIO.c)(0x61B37E5A)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\gpio.o --omf_browse .\obj\gpio.crf --depend .\obj\gpio.d)
+I (GPIO.h)(0x61B37E80)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h)(0x5F4E27EC)
+F (.\SysTick.c)(0x61D4F670)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\systick.o --omf_browse .\obj\systick.crf --depend .\obj\systick.d)
+I (SysTick.h)(0x596C8A6C)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h)(0x5D2590B6)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h)(0x5F4E27EC)
+I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F200_Def.h)(0x5F4E27EC)
 F (.\Utility\Utility.c)(0x5966E5C8)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\utility.o --omf_browse .\obj\utility.crf --depend .\obj\utility.d)
 I (Utility\Utility.h)(0x595F4E28)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
@@ -49,7 +70,7 @@ I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\
 I (Usb\..\type.h)(0x52D8F4AC)
 I (Usb\..\Utility\Utility.h)(0x595F4E28)
 I (Usb\usbram.h)(0x596C5FFE)
-I (Usb\usbhw.h)(0x59706F14)
+I (Usb\usbhw.h)(0x61C22A6C)
 I (Usb\usbuser.h)(0x57904C22)
 I (Usb\usbdesc.h)(0x61C2174C)
 I (Usb\..\UsbHid\hiduser.h)(0x52E23F60)
@@ -70,7 +91,7 @@ I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\
 I (Usb\..\type.h)(0x52D8F4AC)
 I (Usb\..\Utility\Utility.h)(0x595F4E28)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x599ECD2C)
-I (Usb\usbhw.h)(0x59706F14)
+I (Usb\usbhw.h)(0x61C22A6C)
 I (Usb\usbuser.h)(0x57904C22)
 I (Usb\usbram.h)(0x596C5FFE)
 I (Usb\usbdesc.h)(0x61C2174C)
@@ -86,7 +107,7 @@ I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cms
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\system_SN32F240B.h)(0x5F4E27EC)
 I (Usb\..\type.h)(0x52D8F4AC)
 I (Usb\..\Utility\Utility.h)(0x595F4E28)
-I (Usb\usbhw.h)(0x59706F14)
+I (Usb\usbhw.h)(0x61C22A6C)
 I (Usb\usbram.h)(0x596C5FFE)
 I (Usb\usbdesc.h)(0x61C2174C)
 I (Usb\usbuser.h)(0x57904C22)
@@ -116,7 +137,7 @@ I (UsbHid\hiduser.h)(0x52E23F60)
 I (UsbHid\hidram.h)(0x52E23EAC)
 I (UsbHid\..\Usb\usb.h)(0x57904804)
 I (UsbHid\..\Usb\..\compiler.h)(0x4D8AE8CE)
-I (UsbHid\..\Usb\usbhw.h)(0x59706F14)
+I (UsbHid\..\Usb\usbhw.h)(0x61C22A6C)
 I (UsbHid\..\Usb\usbram.h)(0x596C5FFE)
 I (UsbHid\..\Usb\usbuser.h)(0x57904C22)
 I (UsbHid\..\Usb\usbdesc.h)(0x61C2174C)
