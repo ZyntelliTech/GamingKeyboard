@@ -178,7 +178,10 @@ void SystemInit (void)
 	#endif
 	
 	SN_SYS0->AHBCP_b.AHBPRE = AHB_PRESCALAR;
-
+	
+	//add the extra code
+	SN_SYS0->EXRSTCTRL_b.RESETDIS = 1; //Disable the external reset pin(P3.7)
+	SN_SYS0->SWDCTRL_b.SWDDIS = 1; //Disable the swd pins
 	#if (CLKOUT_SEL_VAL > 0)			//CLKOUT
 	SN_SYS1->AHBCLKEN_b.CLKOUTSEL = CLKOUT_SEL_VAL;
 	SN_SYS1->APBCP1_b.CLKOUTPRE = CLKOUT_PRESCALAR;

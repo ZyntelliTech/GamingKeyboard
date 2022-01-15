@@ -71,11 +71,17 @@ typedef struct
 keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
 uint32_t keyboardhid_report[2];
 
+/* Keycode stack array */
+uint8_t key_stack[6] = {0,0,0,0,0,0};
+
 /* Key Press Flag */
 uint8_t key_pressed = 0;
+uint8_t key_released = 0;
+uint8_t mod_flag = 0; //if the special key is pressed, SHIFT, CTRL, ALT, and WIN
+uint8_t error_flag = 0;
 uint8_t i =  0;
 
-#define CL_NUM 19
+#define CL_NUM 21
 uint8_t ckeyMapper[CL_NUM][2] = {
 	{GPIO_PORT3, GPIO_PIN4},		//CL0
 	{GPIO_PORT3, GPIO_PIN3}, 		//CL1
@@ -83,8 +89,6 @@ uint8_t ckeyMapper[CL_NUM][2] = {
 	{GPIO_PORT1, GPIO_PIN14},		//CL3
 	{GPIO_PORT1, GPIO_PIN13},		//CL4
 	{GPIO_PORT1, GPIO_PIN6},		//CL5
-	//{GPIO_PORT3, GPIO_PIN6},		//CL6
-	//{GPIO_PORT3, GPIO_PIN5},		//CL7
 	{GPIO_PORT0, GPIO_PIN8},		//CL8
 	{GPIO_PORT0, GPIO_PIN9},		//CL9
 	{GPIO_PORT0, GPIO_PIN10},		//CL10
@@ -98,6 +102,9 @@ uint8_t ckeyMapper[CL_NUM][2] = {
 	{GPIO_PORT1, GPIO_PIN3},		//CL18
 	{GPIO_PORT1, GPIO_PIN4},		//CL19
 	{GPIO_PORT1, GPIO_PIN5},		//CL20
+	{GPIO_PORT3, GPIO_PIN6},		//CL6
+	{GPIO_PORT3, GPIO_PIN5},		//CL7
+	
 };
 uint8_t rKeyMapper[6][2] = {
 	{GPIO_PORT2, GPIO_PIN15},		//R0
@@ -108,40 +115,79 @@ uint8_t rKeyMapper[6][2] = {
 	{GPIO_PORT3, GPIO_PIN7},		//R5
 };
 
+uint8_t fr_key_layout[21][6] = {
+	{KEY_ESC, FR_SUP2, KEY_TAB, KEY_CAPSLOCK, KEY_MOD_LSHIFT, KEY_MOD_LCTRL}, //CL0
+	{KEY_NONE, KEY_1, KEY_Q, KEY_A, FR_LABK, KEY_MOD_LMETA}, //CL1
+	{KEY_F1, KEY_2, KEY_W, KEY_S, KEY_Z, KEY_MOD_LALT}, //CL2
+	{KEY_F2, KEY_3, KEY_E, KEY_D, KEY_X, KEY_NONE}, //CL3
+	{KEY_F3, KEY_4, KEY_R, KEY_F, KEY_C, KEY_NONE}, //CL4
+	{KEY_F4, KEY_5, KEY_T, KEY_G, KEY_V, KEY_NONE}, //CL5
+	{KEY_F7, KEY_8, KEY_I, KEY_K, KEY_M, KEY_NONE}, //CL8
+	{KEY_F8, KEY_9, KEY_O, KEY_L, KEY_COMMA, KEY_NONE}, //CL9
+	{KEY_F9, KEY_0, KEY_P, KEY_SEMICOLON, KEY_DOT, KEY_MOD_RALT}, //CL10
+	{KEY_F10, KEY_MINUS, KEY_LEFTBRACE, KEY_APOSTROPHE, KEY_SLASH, KEY_MOD_RMETA}, //CL11
+	{KEY_F11, KEY_EQUAL, KEY_RIGHTBRACE, KEY_APOSTROPHE, KEY_NONE, KEY_COMPOSE}, //CL12
+	{KEY_F12, KEY_BACKSPACE, KEY_NONE, KEY_ENTER, KEY_MOD_RSHIFT, KEY_MOD_RCTRL},//CL13
+	{KEY_SYSRQ, KEY_INSERT, KEY_DELETE, KEY_NONE, KEY_NONE, KEY_LEFT}, //CL14
+	{KEY_SCROLLLOCK, KEY_HOME, KEY_END, KEY_NONE, KEY_UP, KEY_DOWN}, //CL15
+	{KEY_PAUSE, KEY_PAGEUP, KEY_PAGEDOWN, KEY_NONE, KEY_NONE, KEY_RIGHT}, //CL16
+	{KEY_NONE, KEY_NUMLOCK, KEY_KP7, KEY_KP4, KEY_KP1, KEY_NONE}, //CL17
+	{KEY_NONE, KEY_KPSLASH, KEY_KP8, KEY_KP5, KEY_KP2, KEY_KP0}, //CL18
+	{KEY_NONE, KEY_KPASTERISK, KEY_KP9, KEY_KP6, KEY_KP3, KEY_KPDOT}, //CL19
+	{KEY_NONE, KEY_KPMINUS, KEY_KPPLUS, KEY_NONE, KEY_KPENTER, KEY_NONE}, //CL20
+	{KEY_F5, KEY_6, KEY_Y, KEY_H, KEY_B, KEY_SPACE}, //CL6
+	{KEY_F6, KEY_7, KEY_U, KEY_J, KEY_N, KEY_NONE} //CL7	
+};
+
+uint8_t testKey[4][4] = {
+	{KEY_D, KEY_H, KEY_4, KEY_MOD_LSHIFT},
+	{KEY_A, KEY_B, KEY_C, KEY_MOD_LCTRL},
+	{KEY_E, KEY_F, KEY_G, KEY_MOD_RSHIFT},
+	{KEY_1, KEY_2, KEY_3, KEY_MOD_RCTRL},
+};
 
 /*_____ F U N C T I O N S __________________________________________________*/
 void SysTick_Init(void);
 void NDT_Init(void);
 
-void SendKeyCode(keyboardHID key_hid, uint32_t delay_ms)
+void push_key(uint8_t keycode)
 {
+	key_stack[5] = key_stack[4];
+	key_stack[4] = key_stack[3];
+	key_stack[3] = key_stack[2];
+	key_stack[2] = key_stack[1];
+	key_stack[1] = key_stack[0];
+	key_stack[0] = keycode;
+}
+ uint32_t SendKeyCode(keyboardHID key_hid, uint32_t delay_ms)
+{
+	uint32_t ret;
 	keyboardhid_report[0] = (key_hid.KEYCODE2<<24) | (key_hid.KEYCODE1<<16) | (key_hid.RESERVED << 8) | key_hid.MODIFIER;
 	keyboardhid_report[1] = (key_hid.KEYCODE6<<24) | (key_hid.KEYCODE5<<16) | (key_hid.KEYCODE4<<8) | (key_hid.KEYCODE3);
-	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
+	ret = USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
 	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
+	return ret;
 }
-void releaseKeyCode(uint32_t delay_ms)
+uint32_t releaseKeyCode(uint32_t delay_ms)
 {
+	uint32_t ret;
 	memset(&keyboardhid, 0x00, 8);
 	keyboardhid_report[0] = 0;
 	keyboardhid_report[1] = 0;
-	USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
+	ret = USB_EPnINFunction(USB_EP1, keyboardhid_report, 8);
 	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
+	return ret;
 }
+
 
 void GPIO_Configuration(void)
 {
 	// Input/Output mode
 	SN_GPIO0->MODE = 0xFFFFFFFF;
 	SN_GPIO1->MODE = 0xFFFFFFFF;
-	SN_GPIO2->MODE = 0xFFF7FFF;
-	SN_GPIO3->MODE = 0x0000F078;
+	SN_GPIO2->MODE = 0xFFF7FFF; //P2.15 is input
+	SN_GPIO3->MODE = 0x0000F078; //P3.7~P3.11 is input.
 	
-	// Configure Pullup
-	//SN_GPIO0->CFG = 0x00000000;
-	//SN_GPIO1->CFG = 0x00000000;
-	//SN_GPIO2->CFG = 0x00000000;	
-	//SN_GPIO3->CFG = 0x00000000;
 	// Data reset
 	SN_GPIO0->DATA = 0x00000000;
 	SN_GPIO1->DATA = 0x00000000;
@@ -159,85 +205,69 @@ void resetAllGpio()
 
 void readKeyboard(void)
 {
-	resetAllGpio();
-	for(i = 0; i < 4; i++)
+	key_pressed = 0;
+	i = 0;
+	while(i < CL_NUM)
 	{
+		resetAllGpio();
 		GPIO_Set(ckeyMapper[i][0], ckeyMapper[i][1]);
-		switch (i){
-			case 0:
-				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_A; 
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_B; 
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_C; 
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_D;
-					key_pressed = 0x01;
-				}					
-				break;
-			case 1:
-				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){ 
-					keyboardhid.KEYCODE1 = KEY_E;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_F;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_G;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_H;		
-					key_pressed = 0x01;
-				}
-				break;
-			case 2:
-				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_I;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_J;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_K;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_L;		
-					key_pressed = 0x01;
-				}
-				break;
-			case 3:
-				if(SN_GPIO2->DATA_b.DATA15 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_M;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA11 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_N;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA10 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_O;
-					key_pressed = 0x01;
-				}
-				else if(SN_GPIO3->DATA_b.DATA9 == CLICKED){
-					keyboardhid.KEYCODE1 = KEY_P;		
-					key_pressed = 0x01;
-				}
-				break;
+		UT_MAIN_DelayNx10us(5);//50us
+		if(SN_GPIO2->DATA_b.DATA15 == CLICKED){ //R0
+			key_pressed = 0x01;
+			push_key(fr_key_layout[i][0]);
+			break;
 		}
-		if(key_pressed > 0) break;
+		if(SN_GPIO3->DATA_b.DATA11 == CLICKED){ //R1
+			push_key(fr_key_layout[i][1]);
+			key_pressed = 0x01;
+			break;
+		}
+		if(SN_GPIO3->DATA_b.DATA10 == CLICKED){ //R2
+			push_key(fr_key_layout[i][2]); 
+			key_pressed = 0x01;
+			break;
+		}
+		if(SN_GPIO3->DATA_b.DATA9 == CLICKED){ //R3	
+			push_key(fr_key_layout[i][3]);
+			key_pressed = 0x01;
+			break;
+		}
+		if(SN_GPIO3->DATA_b.DATA8 == CLICKED){ //R4
+			if((fr_key_layout[i][4] == KEY_MOD_LSHIFT) || (fr_key_layout[i][4] == KEY_MOD_RSHIFT))
+			{
+				keyboardhid.MODIFIER |= fr_key_layout[i][4];
+			}
+			else{
+				key_pressed = 0x01;
+				push_key(fr_key_layout[i][4]);
+				break;
+			}
+			
+			
+		}					
+		if(SN_GPIO3->DATA_b.DATA7 == CLICKED){ //R5
+	
+			if((fr_key_layout[i][5] == KEY_MOD_LCTRL) || 
+				 (fr_key_layout[i][5] == KEY_MOD_RCTRL) || 
+			   (fr_key_layout[i][5] == KEY_MOD_LALT) || 
+			   (fr_key_layout[i][5] == KEY_MOD_RALT) || 
+				 (fr_key_layout[i][5] == KEY_MOD_LMETA) ||
+				 (fr_key_layout[i][5] == KEY_MOD_RMETA))
+			{
+				
+					 keyboardhid.MODIFIER |= fr_key_layout[i][5];
+			}
+			else{
+				push_key(fr_key_layout[i][5]);
+				key_pressed = 0x01;
+				break;
+			}
+		}
+		i++;
+	}
+	if(key_pressed == 0) {
+		key_released = 1; 
+		push_key(KEY_NONE);
 	}
 }
 /*****************************************************************************
@@ -250,6 +280,7 @@ void readKeyboard(void)
 *****************************************************************************/
 int	main (void)
 {
+	
 	SystemInit();
 	SystemCoreClockUpdate();
 
@@ -264,49 +295,28 @@ int	main (void)
 	GPIO_Configuration();
 	SysTick_Init();	//init SysTick
 	
+	//init key stack
+	memset(key_stack, 0x00, 6);
+	
 	while (1)
 	{
-#if SYSTICK_IRQ == POLLING_METHOD
 		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
 		{
 			// Cycle Processing by SysTick
 			readKeyboard();
-			if(key_pressed == 1){
-				keyboardhid.KEYCODE2 = keyboardhid.KEYCODE1;	
-				//keyboardhid.KEYCODE3 = keyboardhid.KEYCODE1;	
-				//keyboardhid.KEYCODE4 = keyboardhid.KEYCODE1;	
-				//keyboardhid.KEYCODE5 = keyboardhid.KEYCODE1;	
-				//keyboardhid.KEYCODE6 = keyboardhid.KEYCODE1;	
-				SendKeyCode(keyboardhid, 100);		
-				releaseKeyCode(100);
-				key_pressed = 0;
+			if(key_pressed == 1){				
+					keyboardhid.KEYCODE1 = key_stack[0];
+					if( SendKeyCode(keyboardhid, 0) != 0){
+						error_flag = 1;
+					}
 			}
+			if(key_released == 1){
+					releaseKeyCode(0);
+					key_released = 0;
+		}
 			
 			__SYSTICK_CLEAR_COUNTER_AND_FLAG;
 		}
-#endif	
-		/*
-		GPIO_Set(ckeyMapper[0][0], ckeyMapper[0][1]);
-#ifdef BUS_SUSPEND
-		if (sUSB_EumeData.wUSB_Status & mskBUSSUSPEND)	//** Check BusSuspend
-		{
-			USB_Suspend();
-		}
-#endif
-		
-#if (USB_LIBRARY_TYPE == USB_KB_MOUSE_TYPE1) 
-		//readKeyboard();
-		//if(key_flag > 0){ 
-		//	SendKeyCode(keyboardhid, 1);
-		//	releaseKeyCode(1);
-		//	key_flag = 0;
-		//}
-#elif (USB_LIBRARY_TYPE == USB_MOUSE_TYPE)
-			USB_EPnINFunction(USB_EP1,&wUSB_MouseData,4);
-#else
-			USB_EPnINFunction(USB_EP2,&wUSB_MouseData,5);
-#endif
-*/
 	}
 }
 

@@ -34,9 +34,7 @@ uint32_t	USB_EPnINFunction(uint32_t	wEPNum, uint32_t *pData, uint32_t	wBytecnt)
 {
 	volatile	uint32_t	*pUsbReg;
 	uint32_t	i;
-	#if (USB_LIBRARY_TYPE == USB_MOUSE_TYPE)
-	uint32_t	wLoop;
-	#endif
+	
 	pUsbReg = (&SN_USB->EP0CTL) + wEPNum;
 	
 	if (!((*pUsbReg) & mskEPn_ENDP_EN))
@@ -56,18 +54,10 @@ uint32_t	USB_EPnINFunction(uint32_t	wEPNum, uint32_t *pData, uint32_t	wBytecnt)
 
 			//set EPn FIFO offset value to i
 			i = wUSB_EPnOffset[wEPNum-1];
-			#if (USB_LIBRARY_TYPE == USB_MOUSE_TYPE)
-			for (wLoop=0; wLoop<=(wBytecnt>>2); wLoop++)
-			{
-				fnUSBMAIN_WriteFIFO( i , *pData );
-			}
-			#else
-			//fnUSBMAIN_WriteFIFO( i , ((*pData<<8)&0xFFFFFF00)|0x01 );	//** Byte 0 = Report ID
-			//fnUSBMAIN_WriteFIFO( i+4 , (*pData>>24)&0x000000FF );	//** Byte 1 ~ 4 = Mouse data
+		
 			fnUSBMAIN_WriteFIFO( i , *pData);
 			fnUSBMAIN_WriteFIFO( i+4 , *(pData + 1));	
-			#endif
-			//USB_Test();				//return Mouse data
+			
 			USB_EPnAck(wEPNum,wBytecnt);	// ACK hwByteCnt byte
 			return EPn_RETURN_ACK_OK;
 		}
@@ -83,79 +73,4 @@ uint32_t	USB_EPnINFunction(uint32_t	wEPNum, uint32_t *pData, uint32_t	wBytecnt)
 	}
 }
 
-
-/*****************************************************************************
-* Function		: USB_Test
-* Description	: return mosue data
-* Input				: None
-* Output			: None
-* Return			: None
-* Note				: None
-*****************************************************************************/
-void	USB_Test()
-{
-	#define	circle 255
-	
-	switch (mode)
-	{
-		case	0:
-		{
-			if (cnt < circle)
-			{
-				wUSB_MouseData = 0x1<<8;
-				cnt++;
-			}
-			else
-			{
-				cnt = 0;
-				mode++;
-			}
-			break;
-		}
-		case	1:
-		{
-			if (cnt < circle)
-			{
-			wUSB_MouseData = 0xFF<<16;
-				cnt++;
-			}
-			else
-			{
-				cnt = 0;
-				mode++;
-			}
-			break;
-		}
-		case	2:
-		{
-			if (cnt < circle)
-			{
-				wUSB_MouseData = 0xFF<<8;
-				cnt++;
-			}
-			else
-			{
-				cnt = 0;
-				mode++;
-			}
-			break;			
-		}
-		case	3:
-		{
-			if (cnt < circle)
-			{
-				wUSB_MouseData = 0x1<<16;
-				cnt++;
-			}
-			else
-			{
-				cnt = 0;
-				mode = 0;
-			}
-			break;
-		}
-		default:
-			break;
-	}
-}
 

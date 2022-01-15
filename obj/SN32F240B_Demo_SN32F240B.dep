@@ -1,5 +1,5 @@
 Dependencies for Project 'SN32F240B_Demo', Target 'SN32F240B': (DO NOT MODIFY !)
-F (.\main.c)(0x61DA88EC)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
+F (.\main.c)(0x61DF6F94)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
@@ -18,7 +18,7 @@ I (.\UsbHid\hid.h)(0x52E23F60)
 I (.\UsbHid\hiduser.h)(0x52E23F60)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x599ECD2C)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x599ECD2C)
-I (usb_hid_keycode.h)(0x61C223B2)
+I (usb_hid_keycode.h)(0x61DEBD24)
 I (GPIO.h)(0x61B37E80)
 I (SysTick.h)(0x596C8A6C)
 F (.\GPIO.c)(0x61B37E5A)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\gpio.o --omf_browse .\obj\gpio.crf --depend .\obj\gpio.d)
@@ -97,7 +97,7 @@ I (Usb\usbram.h)(0x596C5FFE)
 I (Usb\usbdesc.h)(0x61C2174C)
 I (Usb\..\UsbHid\hid.h)(0x52E23F60)
 I (Usb\..\UsbHid\hidram.h)(0x52E23EAC)
-F (.\Usb\usbepfunc.c)(0x61C21F5E)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\usbepfunc.o --omf_browse .\obj\usbepfunc.crf --depend .\obj\usbepfunc.d)
+F (.\Usb\usbepfunc.c)(0x61DE0D40)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\usbepfunc.o --omf_browse .\obj\usbepfunc.crf --depend .\obj\usbepfunc.d)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
@@ -142,7 +142,7 @@ I (UsbHid\..\Usb\usbram.h)(0x596C5FFE)
 I (UsbHid\..\Usb\usbuser.h)(0x57904C22)
 I (UsbHid\..\Usb\usbdesc.h)(0x61C2174C)
 F (RTE\Device\SN32F248BF\startup_SN32F240B.s)(0x5BA3515A)(--cpu Cortex-M0 -g --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include--pd "__UVISION_VERSION SETA 527" --pd "_RTE_ SETA 1" --pd "SN32F240B SETA 1" --pd "SN32F240B SETA 1"--list .\startup_sn32f240b.lst --xref -o .\obj\startup_sn32f240b.o --depend .\obj\startup_sn32f240b.d)
-F (RTE\Device\SN32F248BF\system_SN32F240B.c)(0x5BA0D14C)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\system_sn32f240b.o --omf_browse .\obj\system_sn32f240b.crf --depend .\obj\system_sn32f240b.d)
+F (RTE\Device\SN32F248BF\system_SN32F240B.c)(0x61DF6FA6)(-c --cpu Cortex-M0 -g -O0 --apcs=interwork -I.\RTE\_SN32F240B-IC:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include-IC:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include-D__UVISION_VERSION="527" -D_RTE_ -DSN32F240B-o .\obj\system_sn32f240b.o --omf_browse .\obj\system_sn32f240b.crf --depend .\obj\system_sn32f240b.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x599ECD2E)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\SONiX\SN32F2_DFP\1.3.2\Device\Include\SN32F240B.h)(0x5F4E27EC)
 I (C:\Users\hmh41\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm0.h)(0x5D2590B6)
