@@ -20,3 +20,5 @@
 .\obj\main.o: usb_hid_keycode.h
 .\obj\main.o: GPIO.h
 .\obj\main.o: SysTick.h
+.\obj\main.o: CT16.h
+.\obj\main.o: CT16B1.h

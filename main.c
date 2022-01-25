@@ -1,29 +1,11 @@
 /******************** (C) COPYRIGHT 2018 SONiX *******************************
-* COMPANY: SONiX
-* DATE:		 2018/02
-* AUTHOR:	 SA1
+* COMPANY: Freelancer
+* DATE:		 2022/01/25
+* AUTHOR:	 Ming
 * IC:			 SN32F240B
 *____________________________________________________________________________
-* REVISION	Date				User		Description
-* 1.00			2017/07/07	Tim		1. First release
-* 1.01			2017/07/17	Tim		1. Modified the BL jump address
-*															2. Added the EMC protect
-* 1.02			2018/02/06	Tim		1. Add NotPinOut_GPIO_init to set the status of the GPIO which are NOT pin-out to input pull-up.
-*															2. Add the CodeOption_SN32F240B.s to modify Code option, please modify with Configuration Wizard, 
-*																 and Strongly recommand to keep CS0 for debugging with SN-LINK.
-*															3. Enable the EFT protect process.
-* 1.03			2018/09/27	Tim		1. Modify the usbhw.c.
-* 1.04			2019/12/03	Tim		1. Modify usbhw.c
-*															2. Modify the SOF judging grammar in USB IRQ_handler flow
-*															3. Modify the HID Descriptor for USB ISP
-*___
-*_________________________________________________________________
-* THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS TIME TO MARKET.
-* SONiX SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL 
-* DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE
-* AND/OR THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN 
-* IN CONNECTION WITH THEIR PRODUCTS.
+* The Firmware implement the keyboard with RGB led.
+* Scan rate: 1ms
 *****************************************************************************/
 
 /*_____ I N C L U D E S ____________________________________________________*/
@@ -42,8 +24,15 @@
 #include "usb_hid_keycode.h"
 #include "GPIO.h"
 #include "SysTick.h"
+#include "CT16.h"
+#include "CT16B1.h"
+//Button Status
 #define CLICKED	 1
 #define RELEASED 0
+// PWM Constant for LED driver
+#define PWM_STEP	10     // PWM resolution
+#define PWM_CYCLE	12000  //the cycle register value, which is corresonded to 1ms
+#define MAX_STEPS 1200	 // this is MAXIMUM step size, this value = PWM_CYCLE / PWM_STEP
 /*_____ D E C L A R A T I O N S ____________________________________________*/
 void	NotPinOut_GPIO_init(void);
 
@@ -65,22 +54,29 @@ typedef struct
 	uint8_t KEYCODE4;
 	uint8_t KEYCODE5;
 	uint8_t KEYCODE6;
-}keyboardHID;
+}keyboardHID; // keyboard report structure
 
-/* USB HID variables */
 keyboardHID keyboardhid = {0,0,0,0,0,0,0,0};
-uint32_t keyboardhid_report[2];
+
+uint32_t keyboardhid_report[2]; // 32bit array variable to send the report to PC
 
 /* Keycode stack array */
 uint8_t key_stack[6] = {0,0,0,0,0,0};
 
-/* Key Press Flag */
-uint8_t key_pressed = 0;
-uint8_t key_released = 0;
-uint8_t mod_flag = 0; //if the special key is pressed, SHIFT, CTRL, ALT, and WIN
-uint8_t error_flag = 0;
-uint8_t i =  0;
+/* Key variables */
+uint8_t key_pressed = 0; //set when key pressed
+uint8_t key_released = 0;//set when key released
+uint8_t mod_flag = 0; //set if the special key is pressed, SHIFT, CTRL, ALT, and WIN
+uint8_t error_flag = 0; // set if error occured
+uint8_t i =  0; // index variable
 
+/* LED PWM variables */
+uint16_t red_duty = 0;  // PWM Duty for RED led
+uint16_t blue_duty = 0; // PWM Duty for BLUE led
+uint16_t green_duty = 0;// PWM Duty for GREEN led
+uint8_t counting_flag = 0; /* 0: Timer 1 is set as upcounting, 1: Timer 1 is set as downcounting */
+
+//key matrix columns
 #define CL_NUM 21
 uint8_t ckeyMapper[CL_NUM][2] = {
 	{GPIO_PORT3, GPIO_PIN4},		//CL0
@@ -104,8 +100,8 @@ uint8_t ckeyMapper[CL_NUM][2] = {
 	{GPIO_PORT1, GPIO_PIN5},		//CL20
 	{GPIO_PORT3, GPIO_PIN6},		//CL6
 	{GPIO_PORT3, GPIO_PIN5},		//CL7
-	
 };
+//key matrix rows
 uint8_t rKeyMapper[6][2] = {
 	{GPIO_PORT2, GPIO_PIN15},		//R0
 	{GPIO_PORT3, GPIO_PIN11}, 	//R1
@@ -115,6 +111,7 @@ uint8_t rKeyMapper[6][2] = {
 	{GPIO_PORT3, GPIO_PIN7},		//R5
 };
 
+//key layout
 uint8_t fr_key_layout[21][6] = {
 	{KEY_ESC, FR_SUP2, KEY_TAB, KEY_CAPSLOCK, KEY_MOD_LSHIFT, KEY_MOD_LCTRL}, //CL0
 	{KEY_NONE, KEY_1, KEY_Q, KEY_A, FR_LABK, KEY_MOD_LMETA}, //CL1
@@ -139,17 +136,150 @@ uint8_t fr_key_layout[21][6] = {
 	{KEY_F6, KEY_7, KEY_U, KEY_J, KEY_N, KEY_NONE} //CL7	
 };
 
-uint8_t testKey[4][4] = {
-	{KEY_D, KEY_H, KEY_4, KEY_MOD_LSHIFT},
-	{KEY_A, KEY_B, KEY_C, KEY_MOD_LCTRL},
-	{KEY_E, KEY_F, KEY_G, KEY_MOD_RSHIFT},
-	{KEY_1, KEY_2, KEY_3, KEY_MOD_RCTRL},
-};
-
 /*_____ F U N C T I O N S __________________________________________________*/
 void SysTick_Init(void);
 void NDT_Init(void);
 
+void RGB_Line0_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFFF4; //line 0
+	if(val & 0x01) GPIO_Set(GPIO_PORT2, GPIO_PIN0); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT2, GPIO_PIN1); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT2, GPIO_PIN3); // Turn on the GREEN	
+}
+void RGB_Line1_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFF8F; //line 1
+	if(val & 0x01) GPIO_Set(GPIO_PORT2, GPIO_PIN4); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT2, GPIO_PIN5); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT2, GPIO_PIN6); // Turn on the GREEN
+}
+void RGB_Line2_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFC7F; //line 2
+	if(val & 0x01) GPIO_Set(GPIO_PORT2, GPIO_PIN7); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT2, GPIO_PIN8); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT2, GPIO_PIN9); // Turn on the GREEN
+}
+void RGB_Line3_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO2->DATA = SN_GPIO2->DATA & 0xE3FF; //line 3
+	if(val & 0x01) GPIO_Set(GPIO_PORT2, GPIO_PIN10); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT2, GPIO_PIN11); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT2, GPIO_PIN12); // Turn on the GREEN
+}
+void RGB_Line4_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO1->DATA = SN_GPIO1->DATA & 0xFC7F; //line 4
+	if(val & 0x01) GPIO_Set(GPIO_PORT1, GPIO_PIN7); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT1, GPIO_PIN8); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT1, GPIO_PIN9); // Turn on the GREEN
+}
+void RGB_Line5_Driver(uint8_t val) //bit 0: Red, bit1: Blue, bit2: Green, if bit is set, turn on, else, turn off
+{
+	//SN_GPIO1->DATA = SN_GPIO1->DATA & 0xE3FF; //line 5
+	if(val & 0x01) GPIO_Set(GPIO_PORT1, GPIO_PIN10); // turn on the RED
+	if(val & 0x02) GPIO_Set(GPIO_PORT1, GPIO_PIN11); // turn on the BLUE
+	if(val & 0x04) GPIO_Set(GPIO_PORT1, GPIO_PIN12); // Turn on the GREEN
+}
+void led_all_off()
+{
+	SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFFF4; //line 0
+	SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFF8F; //line 1
+	SN_GPIO2->DATA = SN_GPIO2->DATA & 0xFC7F; //line 2
+	SN_GPIO2->DATA = SN_GPIO2->DATA & 0xE3FF; //line 3
+	SN_GPIO1->DATA = SN_GPIO1->DATA & 0xFC7F; //line 4
+	SN_GPIO1->DATA = SN_GPIO1->DATA & 0xE3FF; //line 5
+}
+// set CL0-CL20 as LOW
+void cl_all_on(void)
+{
+	SN_GPIO0->DATA = SN_GPIO0->DATA & 0x80FF;
+	SN_GPIO1->DATA = SN_GPIO1->DATA & 0x1F80;
+	SN_GPIO3->DATA = SN_GPIO3->DATA & 0xFF87;
+}
+
+void set_pwm_red(uint16_t val) // set the pwm duty for LED color
+{
+	SN_CT16B1->MR8 = PWM_STEP * val; //LR0
+	SN_CT16B1->MR12 = PWM_STEP * val;//LR1
+	SN_CT16B1->MR15 = PWM_STEP * val;//LR2
+	SN_CT16B1->MR18 = PWM_STEP * val;//LR3
+	SN_CT16B1->MR23 = PWM_STEP * val;//LR4
+	SN_CT16B1->MR2 = PWM_STEP * val; //LR5	
+}
+void set_pwm_blue(uint16_t val){ // set the pwm duty for BLUE color
+	SN_CT16B1->MR9 = PWM_STEP * val; //LB0
+	SN_CT16B1->MR13 = PWM_STEP * val;//LB1
+	SN_CT16B1->MR16 = PWM_STEP * val;//LB2
+	SN_CT16B1->MR19 = PWM_STEP * val;//LB3
+	SN_CT16B1->MR0 = PWM_STEP * val; //LB4
+	SN_CT16B1->MR3 = PWM_STEP * val; //LB5
+}
+void set_pwm_green(uint16_t val){ // set the pwm duty for GREEN color
+	SN_CT16B1->MR11 = PWM_STEP * val;//LG0
+	SN_CT16B1->MR14 = PWM_STEP * val;//LG1
+	SN_CT16B1->MR17 = PWM_STEP * val;//LG2
+	SN_CT16B1->MR20 = PWM_STEP * val;//LG3
+	SN_CT16B1->MR1 = PWM_STEP * val; //LG4
+	SN_CT16B1->MR4 = PWM_STEP * val; //LG5
+}
+void MN_CtDemoCase12(void) //Configured the Timer 1(PWM timer)
+{
+	CT16B1_Init(); //Timer enable
+	//Set MR10 value for 1ms PWM period ==> count value = 1000*12 = 12000
+	SN_CT16B1->MR10 = PWM_CYCLE;
+	
+	//Set MR1 value for 30% duty ==> count value = 12000 - (30%*12000) = 8400
+	SN_CT16B1->MR8 = 0; //LR0
+	SN_CT16B1->MR9 = 0; //LB0
+	SN_CT16B1->MR11 = 0;//LG0
+	SN_CT16B1->MR12 = 0;//LR1
+	SN_CT16B1->MR13 = 0;//LB1
+	SN_CT16B1->MR14 = 0;//LG1
+	SN_CT16B1->MR15 = 0;//LR2
+	SN_CT16B1->MR16 = 0;//LB2
+	SN_CT16B1->MR17 = 0;//LG2
+	SN_CT16B1->MR18 = 0;//LR3
+	SN_CT16B1->MR19 = 0;//LB3
+	SN_CT16B1->MR20 = 0;//LG3
+	SN_CT16B1->MR23 = 0;//LR4
+	SN_CT16B1->MR0 = 0; //LB4	
+	SN_CT16B1->MR1 = 0; //LG4
+	SN_CT16B1->MR2 = 0; //LR5
+	SN_CT16B1->MR3 = 0; //LB5
+	SN_CT16B1->MR4 = 0; //LG5
+	
+	//Enable PWM function, IOs and select the PWM modes
+	SN_CT16B1->PWMENB = (mskCT16_PWM0EN_EN | mskCT16_PWM1EN_EN | mskCT16_PWM2EN_EN | mskCT16_PWM3EN_EN | mskCT16_PWM4EN_EN | mskCT16_PWM8EN_EN | mskCT16_PWM9EN_EN
+											| mskCT16_PWM11EN_EN | mskCT16_PWM12EN_EN | mskCT16_PWM13EN_EN | mskCT16_PWM14EN_EN | mskCT16_PWM15EN_EN | mskCT16_PWM16EN_EN | mskCT16_PWM17EN_EN | mskCT16_PWM18EN_EN
+											| mskCT16_PWM19EN_EN | mskCT16_PWM20EN_EN | mskCT16_PWM23EN_EN);//Enable PWM0/1/2 function
+	
+	SN_CT16B1->PWMIOENB = (mskCT16_PWM0IOEN_EN | mskCT16_PWM1IOEN_EN | mskCT16_PWM2IOEN_EN | mskCT16_PWM3IOEN_EN | mskCT16_PWM4IOEN_EN | mskCT16_PWM8IOEN_EN | 
+												mskCT16_PWM9IOEN_EN | mskCT16_PWM11IOEN_EN | mskCT16_PWM12IOEN_EN | mskCT16_PWM13IOEN_EN | mskCT16_PWM14IOEN_EN | mskCT16_PWM15IOEN_EN |
+												mskCT16_PWM16IOEN_EN | mskCT16_PWM17IOEN_EN | mskCT16_PWM18IOEN_EN | mskCT16_PWM19IOEN_EN | mskCT16_PWM20IOEN_EN | mskCT16_PWM23IOEN_EN);//Enable PWM0/1/2 IO
+	
+	SN_CT16B1->PWMCTRL = (mskCT16_PWM0MODE_2 | mskCT16_PWM1MODE_2 | mskCT16_PWM2MODE_2 | mskCT16_PWM3MODE_2 | mskCT16_PWM4MODE_2 | mskCT16_PWM8MODE_2 | mskCT16_PWM9MODE_2 | 
+												mskCT16_PWM11MODE_2 | mskCT16_PWM12MODE_2 | mskCT16_PWM13MODE_2 | mskCT16_PWM14MODE_2 | mskCT16_PWM15MODE_2);	//PWM0/1/2  select as PWM mode 2
+	SN_CT16B1->PWMCTRL2 = (mskCT16_PWM16MODE_2 | mskCT16_PWM17MODE_2 | mskCT16_PWM18MODE_2 | mskCT16_PWM19MODE_2 | mskCT16_PWM20MODE_2 | mskCT16_PWM23MODE_2);
+  SN_PFPA->CT16B1 = 0x001FFB1F;
+	
+	//Set MR23 match interrupt and TC rest 
+	SN_CT16B1->MCTRL2 = (mskCT16_MR10RST_EN);						
+
+	//Set CT16B0 as the up-counting mode.
+	SN_CT16B1->TMRCTRL = (mskCT16_CRST);
+
+	//Wait until timer reset done.
+	while (SN_CT16B1->TMRCTRL & mskCT16_CRST);			
+	
+	//Let TC start counting.
+	SN_CT16B1->TMRCTRL |= mskCT16_CEN_EN;						
+	
+	//Enable CT16B0's NVIC interrupt.
+	CT16B1_NvicDisable();
+}
+// add the pressed/released keycode to stack
 void push_key(uint8_t keycode)
 {
 	key_stack[5] = key_stack[4];
@@ -159,6 +289,7 @@ void push_key(uint8_t keycode)
 	key_stack[1] = key_stack[0];
 	key_stack[0] = keycode;
 }
+//Send the pressed keycode to PC
  uint32_t SendKeyCode(keyboardHID key_hid, uint32_t delay_ms)
 {
 	uint32_t ret;
@@ -168,6 +299,7 @@ void push_key(uint8_t keycode)
 	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
 	return ret;
 }
+// send the key release to PC
 uint32_t releaseKeyCode(uint32_t delay_ms)
 {
 	uint32_t ret;
@@ -178,8 +310,7 @@ uint32_t releaseKeyCode(uint32_t delay_ms)
 	if(delay_ms > 0) UT_MAIN_DelayNms(delay_ms);
 	return ret;
 }
-
-
+// init the GPIO ports
 void GPIO_Configuration(void)
 {
 	// Input/Output mode
@@ -194,15 +325,26 @@ void GPIO_Configuration(void)
 	SN_GPIO2->DATA = 0x00000000;
 	SN_GPIO3->DATA = 0x00000000;
 }
-
+// Reset ALL GPIO data register
 void resetAllGpio()
 {
 	SN_GPIO0->DATA = 0x00000000;
 	SN_GPIO1->DATA = 0x00000000;
-	SN_GPIO2->DATA = 0x00000000;
+	SN_GPIO2->DATA &= 0x00000004;
 	SN_GPIO3->DATA = 0x00000000;
 }
-
+//Led driver function
+void led_blink()
+{
+	cl_all_on();
+	RGB_Line0_Driver(0x04);
+	RGB_Line1_Driver(0x02);
+	RGB_Line2_Driver(0x01);
+	RGB_Line3_Driver(0x04);
+	RGB_Line4_Driver(0x02);
+	RGB_Line5_Driver(0x01);
+}
+// scan the keygen
 void readKeyboard(void)
 {
 	key_pressed = 0;
@@ -211,58 +353,56 @@ void readKeyboard(void)
 	{
 		resetAllGpio();
 		GPIO_Set(ckeyMapper[i][0], ckeyMapper[i][1]);
-		UT_MAIN_DelayNx10us(5);//50us
-		if(SN_GPIO2->DATA_b.DATA15 == CLICKED){ //R0
-			key_pressed = 0x01;
-			push_key(fr_key_layout[i][0]);
-			break;
-		}
-		if(SN_GPIO3->DATA_b.DATA11 == CLICKED){ //R1
-			push_key(fr_key_layout[i][1]);
-			key_pressed = 0x01;
-			break;
-		}
-		if(SN_GPIO3->DATA_b.DATA10 == CLICKED){ //R2
-			push_key(fr_key_layout[i][2]); 
-			key_pressed = 0x01;
-			break;
-		}
-		if(SN_GPIO3->DATA_b.DATA9 == CLICKED){ //R3	
-			push_key(fr_key_layout[i][3]);
-			key_pressed = 0x01;
-			break;
-		}
-		if(SN_GPIO3->DATA_b.DATA8 == CLICKED){ //R4
-			if((fr_key_layout[i][4] == KEY_MOD_LSHIFT) || (fr_key_layout[i][4] == KEY_MOD_RSHIFT))
-			{
-				keyboardhid.MODIFIER |= fr_key_layout[i][4];
-			}
-			else{
+		UT_MAIN_DelayNx10us(1);//10us
+		// scan the keyboard
+			if(SN_GPIO2->DATA_b.DATA15 == CLICKED){ //R0
 				key_pressed = 0x01;
-				push_key(fr_key_layout[i][4]);
+				push_key(fr_key_layout[i][0]);
 				break;
 			}
-			
-			
-		}					
-		if(SN_GPIO3->DATA_b.DATA7 == CLICKED){ //R5
-	
-			if((fr_key_layout[i][5] == KEY_MOD_LCTRL) || 
+			if(SN_GPIO3->DATA_b.DATA11 == CLICKED){ //R1
+				push_key(fr_key_layout[i][1]);
+				key_pressed = 0x01;
+				break;
+			}
+			if(SN_GPIO3->DATA_b.DATA10 == CLICKED){ //R2
+				push_key(fr_key_layout[i][2]); 
+				key_pressed = 0x01;
+				break;
+			}
+			if(SN_GPIO3->DATA_b.DATA9 == CLICKED){ //R3	
+				push_key(fr_key_layout[i][3]);
+				key_pressed = 0x01;
+				break;
+			}
+			if(SN_GPIO3->DATA_b.DATA8 == CLICKED){ //R4
+				if((fr_key_layout[i][4] == KEY_MOD_LSHIFT) || (fr_key_layout[i][4] == KEY_MOD_RSHIFT))
+				{
+					keyboardhid.MODIFIER |= fr_key_layout[i][4];
+				}
+				else{
+					key_pressed = 0x01;
+					push_key(fr_key_layout[i][4]);
+					break;
+				}		
+			}					
+			if(SN_GPIO3->DATA_b.DATA7 == CLICKED){ //R5
+				if((fr_key_layout[i][5] == KEY_MOD_LCTRL) || 
 				 (fr_key_layout[i][5] == KEY_MOD_RCTRL) || 
 			   (fr_key_layout[i][5] == KEY_MOD_LALT) || 
 			   (fr_key_layout[i][5] == KEY_MOD_RALT) || 
 				 (fr_key_layout[i][5] == KEY_MOD_LMETA) ||
 				 (fr_key_layout[i][5] == KEY_MOD_RMETA))
-			{
-				
+				{
 					 keyboardhid.MODIFIER |= fr_key_layout[i][5];
+				}
+				else{
+					push_key(fr_key_layout[i][5]);
+					key_pressed = 0x01;
+					break;
+				}
 			}
-			else{
-				push_key(fr_key_layout[i][5]);
-				key_pressed = 0x01;
-				break;
-			}
-		}
+		//end
 		i++;
 	}
 	if(key_pressed == 0) {
@@ -270,6 +410,7 @@ void readKeyboard(void)
 		push_key(KEY_NONE);
 	}
 }
+
 /*****************************************************************************
 * Function		: main
 * Description	: USB HID demo code 
@@ -281,42 +422,86 @@ void readKeyboard(void)
 int	main (void)
 {
 	
-	SystemInit();
-	SystemCoreClockUpdate();
+	SystemInit(); // Init the system register
+	SystemCoreClockUpdate(); //enable the peripheral clocks
 
 	//1. User SHALL define PKG on demand.
 	//2. User SHALL set the status of the GPIO which are NOT pin-out to input pull-up.
 	NotPinOut_GPIO_init();
 	
 	NDT_Init();								/* NDT Initialization */
-	//****************USB Setting START******************//
+	
 	USB_Init();								/* USB Initialization */
-	//*******************USB Setting END*****************//
-	GPIO_Configuration();
-	SysTick_Init();	//init SysTick
 	
-	//init key stack
-	memset(key_stack, 0x00, 6);
+	GPIO_Configuration();     /* GPIO Initaialization */
 	
+	SysTick_Init();						/* init SysTick, make the 1ms timer */
+
+	memset(key_stack, 0x00, 6); /* init key stack */
+	
+	MN_CtDemoCase12(); /* Initi the PWM Timer for LED driver*/
 	while (1)
 	{
-		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+		cl_all_on(); // set CL0-CL20 as LOW
+		if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) //if 1ms flag is set 
 		{
-			// Cycle Processing by SysTick
-			readKeyboard();
-			if(key_pressed == 1){				
+			// clear systick flag
+			__SYSTICK_CLEAR_COUNTER_AND_FLAG;
+
+				if(counting_flag == 0){
+					if(red_duty <  MAX_STEPS){
+						red_duty++;	
+						set_pwm_red(red_duty);
+					}else{
+						if(green_duty < MAX_STEPS){
+							green_duty++;
+							set_pwm_green(green_duty);
+						}else{
+							if(blue_duty < MAX_STEPS){
+								blue_duty++;
+								set_pwm_blue(blue_duty);
+							}else{
+								counting_flag = 1;
+							}
+						}
+					}
+				}
+				else{
+					if(red_duty > 0){
+						red_duty--;	
+						set_pwm_red(red_duty);
+					}else{
+						if(green_duty > 0){
+							green_duty--;
+							set_pwm_green(green_duty);
+						}else{
+							if(blue_duty > 100){
+								blue_duty--;
+								set_pwm_blue(blue_duty);
+							}else{
+								blue_duty = 0;
+								set_pwm_blue(0);
+								red_duty = 100;
+								counting_flag = 0;
+							}
+						}
+					}
+				}
+			//}
+			//	led_all_off();
+				readKeyboard();
+				if(key_pressed == 1){				
 					keyboardhid.KEYCODE1 = key_stack[0];
 					if( SendKeyCode(keyboardhid, 0) != 0){
 						error_flag = 1;
 					}
-			}
-			if(key_released == 1){
+				}
+				if(key_released == 1){
 					releaseKeyCode(0);
 					key_released = 0;
-		}
+				}
 			
-			__SYSTICK_CLEAR_COUNTER_AND_FLAG;
-		}
+		}		
 	}
 }
 

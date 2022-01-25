@@ -397,6 +397,11 @@
               <FileType>1</FileType>
               <FilePath>.\SysTick.c</FilePath>
             </File>
+            <File>
+              <FileName>CT16B1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CT16B1.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
